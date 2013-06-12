@@ -1,7 +1,4 @@
-#include <string.h>
-#include <stdio.h>
-#include <assert.h>
-
+#include <string>
 
 template<typename Op, class Stream1, class Stream2>
 struct ZippedStream {
@@ -148,8 +145,3 @@ operator+(const Vector1& v1, const Vector2& v2) {
  		return FromStream<ZippedStream<Plus, typename Vector1::Stream, typename Vector2::Stream> >()(ZipWith<Plus>(v1.ToStream(), v2.ToStream()));
 }
 
-int main(int argc, const char* argv[]) {
-	Vector a(1024), b(1024), c(1024);
-	auto d = a + b + c;
-	printf("Length: %f\n", d.length());
-}
