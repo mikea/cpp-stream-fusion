@@ -1,7 +1,3 @@
-INCLUDE(ExternalProject)
-SET_DIRECTORY_PROPERTIES(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/third_party)
-
-
 ExternalProject_Add(
   googletest
   URL http://googletest.googlecode.com/files/gtest-1.6.0.zip

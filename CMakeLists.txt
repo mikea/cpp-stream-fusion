@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
 project(stream)
 
+INCLUDE(ExternalProject)
+SET_DIRECTORY_PROPERTIES(PROPERTIES EP_BASE ${CMAKE_BINARY_DIR}/third_party)
+
 include(gtest.cmake)
-include_directories(${GTEST_INCLUDE_DIR})
+include(boost.cmake)
+
+include_directories(${GTEST_INCLUDE_DIR} ${BOOST_INCLUDE_DIR})
 
 add_definitions(-std=c++11)
 # add_definitions(-stdlib=libc++)
