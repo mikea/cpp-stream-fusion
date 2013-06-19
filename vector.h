@@ -4,8 +4,48 @@
 #include <string>
 #include <vector>
 
+#include <boost/concept_check.hpp>
+#include <boost/concept/assert.hpp>
+#include <boost/concept/requires.hpp>
+
+// Defines Stream concept
+template<class X>
+struct IsStream {
+ public:
+  // A stream is something
+  BOOST_CONCEPT_USAGE(IsStream) {
+    // With size() method
+    size_t size = x.size();
+    // begin() method returning ::Iterator type
+    typename X::Iterator i = x.begin();
+    // ++ iterator advancing operator
+    ++i;
+    // and end() checker
+    bool atEnd = x.end(i);
+  }
+
+ private:
+  X x;
+};
+
+template<class X>
+struct IsOpObject {
+ public:
+  BOOST_CONCEPT_USAGE(IsOpObject) {
+    double d1, d2;
+    double r = x(d1, d2);
+  }
+
+ private:
+  X x;
+};
+
 template<typename Op, class Stream1, class Stream2>
 struct ZippedStream {
+  BOOST_CONCEPT_ASSERT((IsOpObject<Op>));
+  BOOST_CONCEPT_ASSERT((IsStream<Stream1>));
+  BOOST_CONCEPT_ASSERT((IsStream<Stream2>));
+
   typedef typename Stream1::Iterator Iterator1;
   typedef typename Stream2::Iterator Iterator2;
 
@@ -47,12 +87,18 @@ struct ZippedStream {
 };
 
 template<typename Op, class Stream1, class Stream2>
-ZippedStream<Op, Stream1, Stream2> ZipWith(const Stream1& s1, const Stream2& s2) {
+BOOST_CONCEPT_REQUIRES(
+    ((IsStream<Stream1>))
+    ((IsStream<Stream2>)),
+(ZippedStream<Op, Stream1, Stream2>)) ZipWith(const Stream1& s1, const Stream2& s2) {
   return ZippedStream<Op, Stream1, Stream2>(s1, s2);
 }
 
 template<typename Op, class Stream>
-double Fold(const Stream& stream, double init) {
+BOOST_CONCEPT_REQUIRES(
+    ((IsOpObject<Op>))
+    ((IsStream<Stream>)),
+(double)) Fold(const Stream& stream, double init) {
   Op op;
   double result = init;
   for (auto it = stream.begin(); !stream.end(it); ++it) {
@@ -63,11 +109,11 @@ double Fold(const Stream& stream, double init) {
 
 //-----------------------
 
-struct Plus {
+struct Plus : public std::binary_function<double, double, double> {
   double operator()(double d1, double d2) const { return d1 + d2; }
 };
 
-struct Mul {
+struct Mul : public std::binary_function<double, double, double> {
   double operator()(double d1, double d2) const { return d1 * d2; }
 };
 
@@ -79,6 +125,9 @@ class Vector {
     data_.resize(size);
   }
 
+  // TODO: Vector should be a stream itself. It is not possible now because ToStream()
+  // returns Stream by reference.
+  // Stream passing around and copy semantics should be checked/enforced.
   struct Stream {
     typedef int Iterator;
 
@@ -117,6 +166,8 @@ class Vector {
 template<class S>
 class VectorFromStream {
  public:
+  BOOST_CONCEPT_ASSERT((IsStream<S>));
+
   typedef S Stream;
   VectorFromStream(const Stream& stream) : stream_(stream) { }
 
@@ -144,6 +195,8 @@ class VectorFromStream {
 
 template<class Stream>
 struct FromStream {
+  BOOST_CONCEPT_ASSERT((IsStream<Stream>));
+
   typedef VectorFromStream<Stream> Result;
 
   Result operator()(const Stream& s) {
