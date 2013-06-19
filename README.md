@@ -10,6 +10,7 @@ compile into no-op => no temp allocation.
 
 todo
 =================
-- implement memory management. Right now I do not delete data at all.
-- implement more vector operations and some algorithms
-- add tests which will ensure that no temp allocation happens
+- implement memory management. Right now the test fails with g++ but passes (strangely) with clang on mac.
+- implement more vector operations and some algorithms.
+- add tests which will ensure that no temp allocation happens. some sort of expectation checker.
+- benchmark code to insure that no performance degradation occurs
