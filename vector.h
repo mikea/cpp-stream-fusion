@@ -8,6 +8,11 @@
 #include <boost/concept/assert.hpp>
 #include <boost/concept/requires.hpp>
 
+class VectorTestSupport {
+ public:
+  static int streamToVector;
+};
+
 // Defines Stream concept.
 template<class X>
 struct IsStream {
@@ -157,6 +162,9 @@ class VectorFromStream {
   VectorFromStream(const Stream& stream) : stream_(stream) { }
 
   operator Vector() const {
+#ifdef VECTOR_TEST
+    VectorTestSupport::streamToVector++;
+#endif
     printf("VectorFromStream->Vector\n");
     size_t size = stream_.size();
     Vector result(size);
