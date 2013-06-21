@@ -10,7 +10,7 @@ compile into no-op => no temp allocation.
 
 todo
 =================
-- implement memory management. Right now the test fails with g++ but passes (strangely) with clang on mac.
+- use lambdas for operations
+- restructure code for easier reading
 - implement more vector operations and some algorithms.
-- add tests which will ensure that no temp allocation happens. some sort of expectation checker.
 - benchmark code to insure that no performance degradation occurs
