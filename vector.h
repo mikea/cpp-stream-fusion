@@ -8,7 +8,7 @@
 #include <boost/concept/assert.hpp>
 #include <boost/concept/requires.hpp>
 
-// Defines Stream concept
+// Defines Stream concept.
 template<class X>
 struct IsStream {
  public:
@@ -22,6 +22,8 @@ struct IsStream {
     ++i;
     // and end() checker
     bool atEnd = x.end(i);
+    // and subscript operator.
+    double d = x[i];
   }
 
  private:
@@ -52,8 +54,8 @@ struct ZippedStream {
   ZippedStream(const Stream1& s1, const Stream2& s2) : op_(), s1_(s1), s2_(s2) { }
 
   const Op op_;
-  const Stream1 s1_;
-  const Stream2 s2_;
+  const Stream1& s1_;
+  const Stream2& s2_;
 
   size_t size() const {
     size_t size1 = s1_.size();
@@ -81,8 +83,8 @@ struct ZippedStream {
     return s1_.end(it.it1_) || s2_.end(it.it2_);
   }
 
-  double get(const Iterator& it) const {
-    return op_(s1_.get(it.it1_), s2_.get(it.it2_));
+  double operator[](const Iterator& it) const {
+    return op_(s1_[it.it1_], s2_[it.it2_]);
   }
 };
 
@@ -102,7 +104,7 @@ BOOST_CONCEPT_REQUIRES(
   Op op;
   double result = init;
   for (auto it = stream.begin(); !stream.end(it); ++it) {
-    result = op(result, stream.get(it));
+    result = op(result, stream[it]);
   }
   return result;
 }
@@ -125,28 +127,11 @@ class Vector {
     data_.resize(size);
   }
 
-  // TODO: Vector should be a stream itself. It is not possible now because ToStream()
-  // returns Stream by reference.
-  // Stream passing around and copy semantics should be checked/enforced.
-  struct Stream {
-    typedef int Iterator;
+  typedef int Iterator;
+  int begin() const { return 0; }
+  bool end(int i) const { return i >= size(); }
 
-    Stream(const Vector& vector) : vector_(vector) { }
-    size_t size() const { return vector_.size(); }
-    int begin() const { return 0; }
-    bool end(int i) const { return i >= size(); }
-    double get(int i) const { return vector_[i]; }
-
-    const Vector& vector_;
-  };
-
-  Stream ToStream() const {
-    return Stream(*this);
-  }
-
-  size_t size() const {
-    return data_.size();
-  }
+  size_t size() const { return data_.size(); }
 
   double operator[](size_t i) const {
     return data_[i];
@@ -157,7 +142,7 @@ class Vector {
   }
 
   double length() {
-    return Fold<Plus>(ZipWith<Mul>(ToStream(), ToStream()), 0);
+    return Fold<Plus>(ZipWith<Mul>(*this, *this), 0);
   }
 
   std::vector<double> data_;
@@ -184,10 +169,14 @@ class VectorFromStream {
     return result;
   }
 
-  Stream ToStream() const { return stream_; }
+  typedef typename Stream::Iterator Iterator;
+  Iterator begin() const { return stream_.begin(); }
+  bool end(const Iterator& i) const { return stream_.end(i); }
+  double operator[](const Iterator& i) const { return stream_[i]; }
+  size_t size() const { return stream_.size(); }
 
   double length() {
-    return Fold<Plus>(ZipWith<Mul>(stream_, stream_), 0);
+    return Fold<Plus>(ZipWith<Mul>(*this, *this), 0);
   }
 
   const Stream& stream_;
@@ -205,9 +194,9 @@ struct FromStream {
 };
 
 template<typename Vector1, typename Vector2>
-typename FromStream<ZippedStream<Plus, typename Vector1::Stream, typename Vector2::Stream> >::Result
+typename FromStream<ZippedStream<Plus, Vector1, Vector2> >::Result
 operator+(const Vector1& v1, const Vector2& v2) {
-  return FromStream<ZippedStream<Plus, typename Vector1::Stream, typename Vector2::Stream> >()(ZipWith<Plus>(v1.ToStream(), v2.ToStream()));
+  return FromStream<ZippedStream<Plus, Vector1, Vector2> >()(ZipWith<Plus>(v1, v2));
 }
 
 #endif
